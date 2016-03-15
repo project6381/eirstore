@@ -13,6 +13,7 @@ def main():
 	execute_queue = 0
 
 	acknowledged_queue_id = []
+	low_id = 99
 
 
 
@@ -22,8 +23,11 @@ def main():
 
 
 		slave_message = message_handler.receive_from_slave()
-		print ['floor:'] + slave_message['master_queue_floor'] + ['button:'] + slave_message['master_queue_button'] 
+		#print ['floor:'] + slave_message['master_queue_floor'] + ['button:'] + slave_message['master_queue_button'] 
 
+		print slave_message['slave_id']
+	
+			
 
 
 		if queue_id == int(slave_message['queue_id']): 
@@ -44,3 +48,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

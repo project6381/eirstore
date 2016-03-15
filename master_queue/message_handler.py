@@ -22,7 +22,7 @@ class MessageHandler:
 								'master_queue_button': [0]*4,
 								'floor': 0,
 								'button': 0,
-								'slave_id': 0,
+								'slave_id': [0]*3,
 								'queue_id': 0}
 
 		self.__master_message = {'master_queue_floor': [0]*4,
@@ -44,8 +44,8 @@ class MessageHandler:
 		if message is not None:
 			floor = int(message[0])
 			button = int(message[1])
-			slave_id = int(message[2])
-			queue_id = int(message[3:])
+			slave_id = int(message[2:5])
+			queue_id = int(message[5:])
 
 			self.__slave_message['master_queue_floor'][floor] = 1
 			self.__slave_message['master_queue_button'][button] = 1

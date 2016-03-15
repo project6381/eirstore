@@ -3,15 +3,27 @@ from message_handler import MessageHandler
 from constants import SLAVE_TO_MASTER_PORT, MASTER_TO_SLAVE_PORT
 import elevator
 import time
+import socket
+import fcntl
+import struct
+import os
 
 
+
+
+	
 
 def main():
 	message_handler = MessageHandler()
 	driver = Driver()
 
 	#my_id = get IP address on this computer
-	my_id = 3
+
+	
+	f = os.popen('ifconfig eth0 | grep "inet\ addr" | cut -d: -f2 | cut -d" " -f1')
+	my_ip = f.read()
+
+	my_id = int(my_ip[len(my_ip)-4:len(my_ip)])
 	acknowledge = 4
 	run_floor = 0
 	run_button = 0
@@ -27,9 +39,13 @@ def main():
 		#button = master_message['button']
 		#execute_queue = master_message['execute_queue']
 		#queue_id = master_message['queue_id']
+		print my_id
 
 
-		message_handler.send_to_master(floor,button,my_id,master_message['queue_id'])
+		message_handler.send_to_master(	floor,
+										button,
+										my_id,
+										master_message['queue_id'])
 
 
 		for i in range (0,4):
@@ -44,11 +60,7 @@ def main():
 		
 
 
-		
-
-		
-
-		print ['floor:'] + master_message['master_queue_floor'] + ['button:'] + master_message['master_queue_button'] 
+		print ['floor:'] + master_message['master_queue_floor'] + ['button:'] + master_message['master_queue_button']
 
 				
 
