@@ -16,14 +16,10 @@ import os
 def main():
 	message_handler = MessageHandler()
 	driver = Driver()
-
-	#my_id = get IP address on this computer
-
 	
-	f = os.popen('ifconfig eth0 | grep "inet\ addr" | cut -d: -f2 | cut -d" " -f1')
-	my_ip = f.read()
 
-	my_id = int(my_ip[len(my_ip)-4:len(my_ip)])
+	my_id = __get_id()
+
 	acknowledge = 4
 	run_floor = 0
 	run_button = 0
@@ -75,5 +71,14 @@ def main():
 			elevator_driver.queue_floor_button_run(floor, button)
 		'''
 
+def __get_id():
+	f = os.popen('ifconfig eth0 | grep "inet\ addr" | cut -d: -f2 | cut -d" " -f1')
+	my_ip = f.read()
+
+	my_id = int(my_ip[len(my_ip)-4:len(my_ip)])
+	return my_id
+
 if __name__ == "__main__":
     main()
+
+
