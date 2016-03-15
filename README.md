@@ -1,2 +1,2 @@
-# eirstore
-Eirik's public workspace
+# sigurdoy
+Sigurd's public workspace
