@@ -8,11 +8,6 @@ import fcntl
 import struct
 import os
 
-
-
-
-	
-
 def main():
 	message_handler = MessageHandler()
 	driver = Driver()
@@ -35,7 +30,7 @@ def main():
 		#button = master_message['button']
 		#execute_queue = master_message['execute_queue']
 		#queue_id = master_message['queue_id']
-		print my_id
+		#print my_id
 
 
 		message_handler.send_to_master(	floor,
@@ -55,10 +50,8 @@ def main():
 		driver.queue_elevator_run(run_floor,run_button)	
 		
 
-
-		print ['floor:'] + master_message['master_queue_floor'] + ['button:'] + master_message['master_queue_button']
-
-				
+		#print master_message['low_id']
+		#print ['floor:'] + master_message['master_queue_floor'] + ['button:'] + master_message['master_queue_button']
 
 
 		time.sleep(0.5)
@@ -74,7 +67,6 @@ def main():
 def __get_id():
 	f = os.popen('ifconfig eth0 | grep "inet\ addr" | cut -d: -f2 | cut -d" " -f1')
 	my_ip = f.read()
-
 	my_id = int(my_ip[len(my_ip)-4:len(my_ip)])
 	return my_id
 

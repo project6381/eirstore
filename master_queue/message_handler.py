@@ -31,7 +31,8 @@ class MessageHandler:
 								'floor': [0]*4, 
 								'button': [0]*4,
 								'execute_queue': 0,
-								'queue_id': 0}
+								'queue_id': 0,
+								'low_id': [0]*3 }
 
 		self.__thread_buffering_master = Thread(target = self.__buffering_master_messages, args = (),)
 		self.__thread_buffering_slave = Thread(target = self.__buffering_slave_messages, args = (),)
@@ -62,12 +63,13 @@ class MessageHandler:
 		return self.__slave_message
 		
 
-	def send_to_slave(self,master_queue_floor,master_queue_button,executer_id,execute_queue,queue_id):
+	def send_to_slave(self,master_queue_floor,master_queue_button,executer_id,execute_queue,queue_id, low_id):
 
 		message = str()
 
 		execute_queue = str(execute_queue)
 		queue_id = str(queue_id)
+		low_id = str(low_id)
 		
 		for i in range(0,len(master_queue_floor)):
 			message += str(master_queue_floor[i])
@@ -79,9 +81,12 @@ class MessageHandler:
 		for i in range(0,len(executer_id)):
 			message += str(executer_id[i])
 
+		for i in range(0,len(low_id)):
+			message += str(low_id[i])
 
 		message += execute_queue
 		message += queue_id
+		message += low_id
 		
 		for _ in range(0,3):
 			self.__send(message,MASTER_TO_SLAVE_PORT)
@@ -111,7 +116,12 @@ class MessageHandler:
 					self.__master_message['button'][i] = 1
 
 			self.__master_message['execute_queue'] = int(message[16])
-			self.__master_message['queue_id'] = int(message[17:])
+
+			lenght = len(self.__master_message['queue_id'])
+			self.__master_message['queue_id'] = int(message[17:17+lenght])
+
+			self.__master_message['low_id'] = int(message[18+lenght:])
+			print self.__master_message['low_id']
 			
 			
 
