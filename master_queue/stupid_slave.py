@@ -3,55 +3,76 @@ from message_handler import MessageHandler
 from constants import SLAVE_TO_MASTER_PORT, MASTER_TO_SLAVE_PORT
 import elevator
 import time
-import socket
-import fcntl
-import struct
-import os
+
+
 
 def main():
 	message_handler = MessageHandler()
 	driver = Driver()
-	
 
-	my_id = __get_id()
-
+	#my_id = get IP address on this computer
+	my_id = 1
 	acknowledge = 4
 	run_floor = 0
 	run_button = 0
+	old_f = None
+	old_but = None
+
+	floor_up = [0]*4
+	floor_down = [0]*4
 
 	while True:
 		
 		
+		position = driver.read_position()
+
+
+		
+
+		master_message = message_handler.receive_from_master()
+		
+		for i in range (0,4):
+			if (master_message['master_floor_up'][i] == 0):
+				floor_up[i] = 0
+
+			if (master_message['master_floor_down'][i] == 0):
+				floor_down[i] = 0
+		
+		time.sleep(0.1)
 
 		(floor,button) = driver.pop_floor_panel_queue()
 
-		master_message = message_handler.receive_from_master()
-		#floor = master_message['floor']
-		#button = master_message['button']
-		#execute_queue = master_message['execute_queue']
-		#queue_id = master_message['queue_id']
-		#print my_id
+		if floor is not None:
+			if button == 0:
+				floor_up[floor] = 1
+			elif button == 1: 
+				floor_down[floor] = 1 	
 
-
-		message_handler.send_to_master(	floor,
-										button,
-										my_id,
-										master_message['queue_id'])
-
-
-		for i in range (0,4):
-			if master_message['floor'][i] == 1:
-				run_floor = i
-			if master_message['button'][i] == 1:
-				run_button = i
-
-
-
-		driver.queue_elevator_run(run_floor,run_button)	
+		message_handler.send_to_master(floor_up,floor_down,my_id,position[0],position[1],position[2],master_message['queue_id'])
 		
 
-		#print master_message['low_id']
-		#print ['floor:'] + master_message['master_queue_floor'] + ['button:'] + master_message['master_queue_button']
+		print floor_up
+		print floor_down
+
+
+
+		(run_floor,run_button) = message_handler.get_my_master_order()
+		
+		print run_floor
+		print run_button
+
+		if run_floor is not None:
+			driver.queue_elevator_run(run_floor,run_button)	
+		
+
+
+		
+		
+		
+
+		print ['floor_up:'] + master_message['master_floor_up'] + ['floor_down:'] + master_message['master_floor_down'] 
+		#print master_message['queue_id']
+				
 
 
 		time.sleep(0.5)
@@ -64,13 +85,5 @@ def main():
 			elevator_driver.queue_floor_button_run(floor, button)
 		'''
 
-def __get_id():
-	f = os.popen('ifconfig eth0 | grep "inet\ addr" | cut -d: -f2 | cut -d" " -f1')
-	my_ip = f.read()
-	my_id = int(my_ip[len(my_ip)-4:len(my_ip)])
-	return my_id
-
 if __name__ == "__main__":
     main()
-
-
