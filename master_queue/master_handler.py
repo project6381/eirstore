@@ -15,6 +15,7 @@ class MasterHandler:
 		self.__button_orders = [0 for floor in range(0,N_FLOORS*2)]
 		self.__elevator_orders = [0 for button in range(0,N_FLOORS*2)]
 		self.__elevator_online = [1 for elevator in range(0,N_ELEVATORS)]
+		
 		self.__active_masters = [0]*N_ELEVATORS
 		self.__active_masters_key = Lock()
 		self.__master_alive_thread_started = False
@@ -36,32 +37,6 @@ class MasterHandler:
 				return i+1
 		return -1 
 	
-	def __buffering_master_alive_messages(self):
-
-			last_message = 'This message will never be heard'
-			self.__master_alive_thread_started = True
-
-			port = ('', MASTER_TO_MASTER_PORT)
-			udp = socket(AF_INET, SOCK_DGRAM)
-			udp.bind(port)
-			udp.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
-
-			downtime = [time.time() + 3]*N_ELEVATORS
-			 
-
-			while True:
-				data, address = udp.recvfrom(1024)
-				message = self.__errorcheck(data)
-				#print "Message: " + message
-				if message is not None:
-					with self.__active_masters_key:
-						self.__active_masters[int(message)-1] = 1		
-						downtime[int(message)-1] = time.time() + 3
-				
-				for i in range(0,N_ELEVATORS):
-					if downtime[i] < time.time():
-						self.__active_masters[i] = 0
-
 
 	def order_elevator(self, button_orders, elevator_positions, elevator_online):
 		self.__button_orders = button_orders
@@ -124,6 +99,34 @@ class MasterHandler:
 						self.__elevator_orders[floor] = elevator+1
 
 		return self.__elevator_orders
+		
+
+	def __buffering_master_alive_messages(self):
+
+			last_message = 'This message will never be heard'
+			self.__master_alive_thread_started = True
+
+			port = ('', MASTER_TO_MASTER_PORT)
+			udp = socket(AF_INET, SOCK_DGRAM)
+			udp.bind(port)
+			udp.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+
+			downtime = [time.time() + 3]*N_ELEVATORS
+			 
+
+			while True:
+				data, address = udp.recvfrom(1024)
+				message = self.__errorcheck(data)
+				#print "Message: " + message
+				if message is not None:
+					with self.__active_masters_key:
+						self.__active_masters[int(message)-1] = 1		
+						downtime[int(message)-1] = time.time() + 3
+				
+				for i in range(0,N_ELEVATORS):
+					if downtime[i] < time.time():
+						self.__active_masters[i] = 0
+
 
 	def __send(self, data, port):
 		send = ('<broadcast>', port)

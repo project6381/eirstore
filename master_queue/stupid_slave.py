@@ -1,4 +1,5 @@
-from slave_driver import SlaveDriver 
+from slave_driver import SlaveDriver
+from slave_handler import SlaveHandler
 from message_handler import MessageHandler
 from constants import SLAVE_TO_MASTER_PORT, MASTER_TO_SLAVE_PORT
 import elevator
@@ -9,6 +10,7 @@ import time
 def main():
 	message_handler = MessageHandler()
 	slave_driver = SlaveDriver()
+	slave_handler = SlaveHandler()
 
 	#my_id = get IP address on this computer
 	my_id = 1
@@ -22,7 +24,12 @@ def main():
 	floor_down = [0]*4
 
 	while True:
-		
+
+		slave_handler.update_slave_alive(my_id)
+
+		if slave_handler.check_slave_alive() == my_id:
+			active_slave = True
+			
 		
 		position = slave_driver.read_position()
 
