@@ -29,7 +29,7 @@ def main():
 
 		if slave_handler.check_slave_alive() == my_id:
 			active_slave = True
-			
+
 		
 		position = slave_driver.read_position()
 

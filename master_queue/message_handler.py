@@ -136,7 +136,8 @@ class MessageHandler:
 			self.__slave_message['direction'] = int(message[11])
 			self.__slave_message['queue_id'] = int(message[12:])
 
-		return self.__slave_message
+			return self.__slave_message
+
 
 
 	def get_my_master_order(self):
@@ -199,14 +200,19 @@ class MessageHandler:
 				udp.bind(port)
 				udp.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
 
+				downtime = time.time() + 0.5
+
 				while True:
 					data, address = udp.recvfrom(1024)
 					message = self.__errorcheck(data)
-					if message != last_message:
+
+					if (message != last_message) or (downtime < time.time()):
 						if message is not None:
 							with self.__receive_buffer_master_key:
 								self.__receive_buffer_master.append(message)	
 						last_message = message
+						downtime = time.time() + 0.5
+
 
 
 
