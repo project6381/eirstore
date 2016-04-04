@@ -2,7 +2,7 @@ from socket import *
 from threading import Thread, Lock
 import time 
 import broadcast 
-from constants import MASTER_TO_SLAVE_PORT, SLAVE_TO_MASTER_PORT, MASTER_TO_MASTER_PORT, N_ELEVATORS
+from constants import MASTER_TO_SLAVE_PORT, SLAVE_TO_MASTER_PORT, N_ELEVATORS
 from socket import *
 import random 
 
@@ -11,18 +11,12 @@ class MessageHandler:
 
 	def __init__(self):
 		self.__receive_buffer_slave = [] 
-		self.__receive_buffer_master = [] 
-		self.__active_masters = [0]*N_ELEVATORS
-		#self.__receive_buffer_master_alive = [] 		
+		self.__receive_buffer_master = [] 	
 		self.__receive_buffer_slave_key = Lock()
 		self.__receive_buffer_master_key = Lock()
-		#self.__receive_buffer_master_alive_key = Lock()
-		self.__active_masters_key = Lock()
 		self.__master_thread_started = False
 		self.__slave_thread_started = False
-		self.__master_alive_thread_started = False
 		
-
 		self.__slave_message = {'slave_floor_up': [0]*4,
 								'slave_floor_down': [0]*4,
 								'slave_id': 0,
@@ -46,7 +40,6 @@ class MessageHandler:
 
 		self.__thread_buffering_master = Thread(target = self.__buffering_master_messages, args = (),)
 		self.__thread_buffering_slave = Thread(target = self.__buffering_slave_messages, args = (),)
-		self.__thread_buffering_master_alive = Thread(target = self.__buffering_master_alive_messages, args = (),)
 	
 
 	def send_to_master(self,slave_floor_up,slave_floor_down,slave_id,last_floor,next_floor,direction,queue_id):
@@ -158,22 +151,6 @@ class MessageHandler:
 			return (None,None)
 
 
-	def update_master_alive(self, elevator_id):
-		self.__send(str(elevator_id),MASTER_TO_MASTER_PORT)
-
-		print "Active masters: " + str(self.__active_masters)
-
-	def check_master_alive(self):	
-
-		if self.__master_alive_thread_started is not True:
-			self.__start(self.__thread_buffering_master_alive)
-
-		for i in range(0,N_ELEVATORS):
-			if self.__active_masters[i] == 1:
-				return i+1
-		return -1 
-
-
 
 	def __send(self, data, port):
 		send = ('<broadcast>', port)
@@ -212,25 +189,26 @@ class MessageHandler:
 			thread.daemon = True # Terminate thread when "main" is finished
 			thread.start()
 
-	
 	def __buffering_master_messages(self):
 
-		last_message = 'This message will never be heard'
-		self.__master_thread_started = True
+				last_message = 'This message will never be heard'
+				self.__master_thread_started = True
 
-		port = ('', SLAVE_TO_MASTER_PORT)
-		udp = socket(AF_INET, SOCK_DGRAM)
-		udp.bind(port)
-		udp.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+				port = ('', SLAVE_TO_MASTER_PORT)
+				udp = socket(AF_INET, SOCK_DGRAM)
+				udp.bind(port)
+				udp.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
 
-		while True:
-			data, address = udp.recvfrom(1024)
-			message = self.__errorcheck(data)
-			if message != last_message:
-				if message is not None:
-					with self.__receive_buffer_master_key:
-						self.__receive_buffer_master.append(message)	
-				last_message = message
+				while True:
+					data, address = udp.recvfrom(1024)
+					message = self.__errorcheck(data)
+					if message != last_message:
+						if message is not None:
+							with self.__receive_buffer_master_key:
+								self.__receive_buffer_master.append(message)	
+						last_message = message
+
+
 
 	def __buffering_slave_messages(self):
 
@@ -250,35 +228,6 @@ class MessageHandler:
 					with self.__receive_buffer_slave_key:
 						self.__receive_buffer_slave.append(message)		
 				last_message = message
-
-	def __buffering_master_alive_messages(self):
-
-		last_message = 'This message will never be heard'
-		self.__master_alive_thread_started = True
-
-		port = ('', MASTER_TO_MASTER_PORT)
-		udp = socket(AF_INET, SOCK_DGRAM)
-		udp.bind(port)
-		udp.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
-
-		downtime = [time.time() + 3]*N_ELEVATORS
-		 
-
-		while True:
-			data, address = udp.recvfrom(1024)
-			message = self.__errorcheck(data)
-			#print "Message: " + message
-			if message is not None:
-				with self.__active_masters_key:
-					self.__active_masters[int(message)-1] = 1		
-					downtime[int(message)-1] = time.time() + 3
-			
-			for i in range(0,N_ELEVATORS):
-				if downtime[i] < time.time():
-					self.__active_masters[i] = 0
-
-
-
 
 
 	def __errorcheck(self,data):

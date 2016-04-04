@@ -1,4 +1,4 @@
-from driver import Driver 
+from slave_driver import SlaveDriver 
 from message_handler import MessageHandler
 from constants import SLAVE_TO_MASTER_PORT, MASTER_TO_SLAVE_PORT
 import elevator
@@ -8,7 +8,7 @@ import time
 
 def main():
 	message_handler = MessageHandler()
-	driver = Driver()
+	slave_driver = SlaveDriver()
 
 	#my_id = get IP address on this computer
 	my_id = 1
@@ -24,10 +24,7 @@ def main():
 	while True:
 		
 		
-		position = driver.read_position()
-
-
-		
+		position = slave_driver.read_position()
 
 		master_message = message_handler.receive_from_master()
 		
@@ -40,7 +37,7 @@ def main():
 		
 		time.sleep(0.1)
 
-		(floor,button) = driver.pop_floor_panel_queue()
+		(floor,button) = slave_driver.pop_floor_panel_queue()
 
 		if floor is not None:
 			if button == 0:
@@ -62,7 +59,7 @@ def main():
 		print run_button
 
 		if run_floor is not None:
-			driver.queue_elevator_run(run_floor,run_button)	
+			slave_driver.queue_elevator_run(run_floor,run_button)	
 		
 
 
