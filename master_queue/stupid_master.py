@@ -40,9 +40,11 @@ def main():
 	while True:
 
 		master_handler.update_master_alive(my_id)
+		master_queue = master_handler.get_master_queue()
 
 		if master_handler.check_master_alive() == my_id:
 			active_master = True
+			button_orders = master_queue[:]
 
 		print "I am NOT master, my id is: " + str(my_id)
 
@@ -51,7 +53,7 @@ def main():
 		while active_master:
 
 			#print "I AM master, my id is: " + str(my_id)
-
+			
 			master_handler.update_master_alive(my_id)
 
 			slave_message = message_handler.receive_from_slave()
@@ -62,7 +64,7 @@ def main():
 				
 
 				last_direction = slave_message['direction']
-				
+
 				if slave_message['last_floor'] == slave_message['next_floor']:
 					arrived = slave_message['last_floor']	
 					if (last_direction == DIRN_UP) or (last_direction == DIRN_STOP):
@@ -142,6 +144,7 @@ def main():
 				for i in range(0,N_ELEVATORS):
 					timeout_active_slaves = 1
 
+			master_handler.update_master_button_order(button_orders)
 			time.sleep(0.02)
 
 			if master_handler.check_master_alive() != my_id:

@@ -1,4 +1,4 @@
-from constants import MASTER_TO_MASTER_PORT, N_ELEVATORS, N_FLOORS, LAST_FLOOR, NEXT_FLOOR, DIRECTION, DIRN_STOP, DIRN_DOWN, DIRN_UP
+from constants import MASTER_TO_MASTER_PORT,MASTER_BUTTON_ORDERS_PORT, N_ELEVATORS, N_FLOORS, LAST_FLOOR, NEXT_FLOOR, DIRECTION, DIRN_STOP, DIRN_DOWN, DIRN_UP
 from socket import *
 from random import randint
 from threading import Thread, Lock
@@ -15,19 +15,37 @@ class MasterHandler:
 		self.__button_orders = [0 for floor in range(0,N_FLOORS*2)]
 		self.__elevator_orders = [0 for button in range(0,N_FLOORS*2)]
 		self.__elevator_online = [1 for elevator in range(0,N_ELEVATORS)]
-		
+
+		self.__master_queue = [0] * 8
 		self.__active_masters = [0]*N_ELEVATORS
 		self.__active_masters_key = Lock()
 		self.__master_alive_thread_started = False
+		self.__button_orders_key = Lock()
+		self.__button_orders_thread_started = False
 		self.__thread_buffering_master_alive = Thread(target = self.__buffering_master_alive_messages, args = (),)
-
+		self.__thread_buffering_button_orders = Thread(target = self.__buffering_button_orders, args = (),)
 
 	def update_master_alive(self, elevator_id):
 		self.__send(str(elevator_id),MASTER_TO_MASTER_PORT)
 
-			#print "Active masters: " + str(self.__active_masters)
-	#def update_master_button_order(self, button_orders):
-				
+	
+		#print "Active masters: " + str(self.__active_masters)
+	
+	def update_master_button_order(self, button_orders):
+		
+		message = str()
+		for elements in button_orders:
+			message += str(elements)
+
+		self.__send(message,MASTER_BUTTON_ORDERS_PORT)		
+
+	def get_master_queue(self): 
+
+		if self.__button_orders_thread_started is not True:
+			self.__start(self.__thread_buffering_button_orders)
+
+		return self.__master_queue
+			
 
 	def check_master_alive(self):	
 
@@ -140,7 +158,6 @@ class MasterHandler:
 
 		return self.__elevator_orders
 		
-
 	def __buffering_master_alive_messages(self):
 
 			last_message = 'This message will never be heard'
@@ -152,8 +169,7 @@ class MasterHandler:
 			udp.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
 
 			downtime = [time.time() + 3]*N_ELEVATORS
-			 
-
+		
 			while True:
 				data, address = udp.recvfrom(1024)
 				message = self.__errorcheck(data)
@@ -167,6 +183,28 @@ class MasterHandler:
 					if downtime[i] < time.time():
 						self.__active_masters[i] = 0
 
+	def __buffering_button_orders(self):
+
+			last_message = 'This message will never be heard'
+			self.__button_orders_thread_started = True
+
+			port = ('', MASTER_BUTTON_ORDERS_PORT)
+			udp = socket(AF_INET, SOCK_DGRAM)
+			udp.bind(port)
+			udp.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+
+		
+			while True:
+				data, address = udp.recvfrom(1024)
+				message = self.__errorcheck(data)
+				#print "Message: " + message
+				if message is not None:
+					with self.__button_orders_key:
+						for i in range(0,8):
+							if (self.__master_queue[i] == 1) or (int(message[i]) == 1): 
+								self.__master_queue[i] = 1	
+				
+					
 
 	def __send(self, data, port):
 		send = ('<broadcast>', port)
