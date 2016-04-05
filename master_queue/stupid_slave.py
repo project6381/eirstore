@@ -25,7 +25,7 @@ def main():
 
 	while True:
 
-		slave_handler.update_slave_alive(my_id)
+		#slave_handler.update_slave_alive(my_id)
 
 		if slave_handler.check_slave_alive() == my_id:
 			active_slave = True

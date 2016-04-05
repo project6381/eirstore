@@ -18,7 +18,7 @@ def main():
 	elevator_orders = [0]*8
 	last_elevator_orders = [10]*8
 	elevator_online = [0]*N_ELEVATORS
-	elevators_queue_id = [0]*N_ELEVATORS
+	elevators_received_current_queue_id = [0]*N_ELEVATORS
 
 
 	active_slaves = 0
@@ -36,7 +36,7 @@ def main():
 	active_master = False
 	downtime_elevator_online = [time.time() + 3]*N_ELEVATORS
 	downtime_queue_id = time.time() + 3
-
+	timeout_active_slaves = 0
 	while True:
 
 		master_handler.update_master_alive(my_id)
@@ -92,23 +92,24 @@ def main():
 				
 
 				if queue_id == slave_message['queue_id']:
-					elevators_queue_id[slave_id-1] = 1
+					elevators_received_current_queue_id[slave_id-1] = 1
 
 
 				active_slaves = elevator_online.count(1)
 
-				print (button_orders != last_button_orders) and (active_slaves == elevators_queue_id.count(1))
-				if (button_orders != last_button_orders) and (active_slaves == elevators_queue_id.count(1)): # and (0 not in elevators_queue_id):
+				#print (button_orders != last_button_orders) and (active_slaves == elevators_received_current_queue_id.count(1))
+				if (button_orders != last_button_orders) and (active_slaves == elevators_received_current_queue_id.count(1) or timeout_active_slaves == 1): # and (0 not in elevators_queue_id):
 					print '1111111111111111111111111111111111'
 					queue_id += 1
 					if queue_id > 9999: 
 						queue_id = 1
 					last_button_orders = button_orders[:]
 					print 'hei'
-					downtime_queue_id = time.time() + 3
+					downtime_queue_id = time.time() + 1
+					timeout_active_slaves = 0
 
 				
-				#print elevators_queue_id
+				#print elevators_received_current_queue_id
 				#print active_slaves
 				#print queue_id
 				print button_orders
@@ -135,7 +136,7 @@ def main():
 
 			if downtime_queue_id < time.time():
 				for i in range(0,N_ELEVATORS):
-					elevators_queue_id[i] = 0
+					timeout_active_slaves = 1
 
 			time.sleep(0.1)
 
