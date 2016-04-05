@@ -3,13 +3,12 @@ from threading import Thread, Lock
 import time 
 import broadcast 
 from constants import MASTER_TO_SLAVE_PORT, SLAVE_TO_MASTER_PORT, N_ELEVATORS
-from socket import *
 import random 
 
 
 class MessageHandler:
 
-	def __init__(self):
+	def __init__(self,slave_id):
 		self.__receive_buffer_slave = [] 
 		self.__receive_buffer_master = [] 	
 		self.__receive_buffer_slave_key = Lock()
@@ -35,7 +34,7 @@ class MessageHandler:
 		self.__last_master_floor_up = [0]*4
 		self.__last_master_floor_down = [0]*4
 
-		
+		self.__slave_id = slave_id
 		self.__slave_queue_id = 0
 
 		self.__thread_buffering_master = Thread(target = self.__buffering_master_messages, args = (),)
@@ -102,13 +101,13 @@ class MessageHandler:
 
 			for i in range (0,4):
 				if self.__last_master_floor_up[i] != self.__master_message['master_floor_up'][i]: # and id == my_id
-					if self.__master_message['master_floor_up'][i] == 1:
+					if self.__master_message['master_floor_up'][i] == self.__slave_id:
 						self.__master_message['floor'].append(i) 
 						self.__master_message['button'].append(0)
 					self.__last_master_floor_up[i] = self.__master_message['master_floor_up'][i]
 				
 				if self.__last_master_floor_down[i] != self.__master_message['master_floor_down'][i]:
-					if self.__master_message['master_floor_down'][i] == 1:					
+					if self.__master_message['master_floor_down'][i] == self.__slave_id:					
 						self.__master_message['floor'].append(i) 
 						self.__master_message['button'].append(1)
 					self.__last_master_floor_down[i] = self.__master_message['master_floor_down'][i]

@@ -36,7 +36,45 @@ class MasterHandler:
 			if self.__active_masters[i] == 1:
 				return i+1
 		return -1 
-	
+		
+	def __send(self, data, port):
+		send = ('<broadcast>', port)
+		udp = socket(AF_INET, SOCK_DGRAM)
+		udp.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+		message='<%s;%s>' % (str(len(data)), data)
+		udp.sendto(message, send)
+		udp.close()
+
+	def __start(self,thread):
+				thread.daemon = True # Terminate thread when "main" is finished
+				thread.start()
+
+	def __errorcheck(self,data):
+		if data[0]=='<' and data[len(data)-1]=='>':
+
+			counter=1
+			separator=False
+			separator_pos=0
+			for char in data:
+				if char == ";" and separator==False:
+					separator_pos=counter
+					separator=True
+				counter+=1
+
+			message_length=str(len(data)-separator_pos-1)
+			test_length=str()
+			for n in range(1,separator_pos-1):
+				test_length+=data[n]
+
+			if test_length==message_length and separator==True:
+				message=str()
+				for n in range(separator_pos,len(data)-1):
+					message+=data[n]
+				return message
+			else:
+				return None
+		else:
+			return None
 
 	def order_elevator(self, button_orders, elevator_positions, elevator_online):
 		self.__button_orders = button_orders

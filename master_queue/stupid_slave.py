@@ -14,7 +14,6 @@ def main():
 	slave_handler = SlaveHandler()
 
 	#my_id = get IP address on this computer
-	my_id = 2
 	acknowledge = 4
 	run_floor = 0
 	run_button = 0
@@ -43,20 +42,20 @@ def main():
 				floor_up[floor] = 1
 			elif button == 1: 
 				floor_down[floor] = 1 	
-
+			
 
 		for i in range (0,4):
-			if (master_message['master_floor_up'][i] == 1):
+			if (master_message['master_floor_up'][i] != 0):
 				floor_up[i] = 0
 
-			if (master_message['master_floor_down'][i] == 1):
+			if (master_message['master_floor_down'][i] != 0):
 				floor_down[i] = 0
 		
-		time.sleep(0.1)
+		time.sleep(0.3)
 
 		
 
-		message_handler.send_to_master(floor_up,floor_down,my_id,position[0],position[1],position[2],master_message['queue_id'])
+		message_handler.send_to_master(floor_up,floor_down,slave_id,position[0],position[1],position[2],master_message['queue_id'])
 		
 
 		print floor_up

@@ -8,7 +8,7 @@ from collections import Counter
 
 def main():
 	
-	message_handler = MessageHandler()
+	message_handler = MessageHandler(123)
 	master_handler = MasterHandler()
 	queue_id = 1
 
@@ -61,6 +61,7 @@ def main():
 				#print ['floor_up:'] + slave_message['slave_floor_up'] + ['floor_down:'] + slave_message['slave_floor_down'] 
 				
 
+				last_direction = slave_message['direction']
 				
 				if slave_message['last_floor'] == slave_message['next_floor']:
 					arrived = slave_message['last_floor']	
@@ -73,8 +74,9 @@ def main():
 						
 					
 
-				last_direction = slave_message['direction']
+				
 				slave_id = slave_message['slave_id']
+				print str(slave_id) + '  slave id' 
 				elevator_positions[slave_id-1] = [slave_message['last_floor'],slave_message['next_floor'],slave_message['direction']] 
 				
 				
@@ -87,7 +89,7 @@ def main():
 						button_orders[i+4] = 1
 				
 
-
+				print str(button_orders) + ' button_orders'
 				#button_orders = slave_message['slave_floor_up'] + slave_message['slave_floor_down']
 
 				
@@ -140,7 +142,7 @@ def main():
 				for i in range(0,N_ELEVATORS):
 					timeout_active_slaves = 1
 
-			time.sleep(0.1)
+			time.sleep(0.02)
 
 			if master_handler.check_master_alive() != my_id:
 				active_master = False
