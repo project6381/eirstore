@@ -8,12 +8,13 @@ import time
 
 
 def main():
-	message_handler = MessageHandler()
+	slave_id = 2
+	message_handler = MessageHandler(slave_id)
 	slave_driver = SlaveDriver()
 	slave_handler = SlaveHandler()
 
 	#my_id = get IP address on this computer
-	my_id = 1
+	my_id = 2
 	acknowledge = 4
 	run_floor = 0
 	run_button = 0
@@ -27,7 +28,7 @@ def main():
 
 		#slave_handler.update_slave_alive(my_id)
 
-		if slave_handler.check_slave_alive() == my_id:
+		if slave_handler.check_slave_alive() == slave_id:
 			active_slave = True
 
 		
@@ -35,15 +36,6 @@ def main():
 
 		master_message = message_handler.receive_from_master()
 		
-		for i in range (0,4):
-			if (master_message['master_floor_up'][i] == 0):
-				floor_up[i] = 0
-
-			if (master_message['master_floor_down'][i] == 0):
-				floor_down[i] = 0
-		
-		time.sleep(0.1)
-
 		(floor,button) = slave_driver.pop_floor_panel_queue()
 
 		if floor is not None:
@@ -51,6 +43,18 @@ def main():
 				floor_up[floor] = 1
 			elif button == 1: 
 				floor_down[floor] = 1 	
+
+
+		for i in range (0,4):
+			if (master_message['master_floor_up'][i] == 1):
+				floor_up[i] = 0
+
+			if (master_message['master_floor_down'][i] == 1):
+				floor_down[i] = 0
+		
+		time.sleep(0.1)
+
+		
 
 		message_handler.send_to_master(floor_up,floor_down,my_id,position[0],position[1],position[2],master_message['queue_id'])
 		

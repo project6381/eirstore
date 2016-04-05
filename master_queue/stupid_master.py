@@ -65,10 +65,10 @@ def main():
 				if slave_message['last_floor'] == slave_message['next_floor']:
 					arrived = slave_message['last_floor']	
 					if (last_direction == DIRN_UP) or (last_direction == DIRN_STOP):
-						slave_message['slave_floor_up'][arrived] = 0
+						#slave_message['slave_floor_up'][arrived] = 0
 						button_orders[arrived] = 0
 					if (last_direction == DIRN_DOWN) or (last_direction == DIRN_STOP):
-						slave_message['slave_floor_down'][arrived] = 0
+						#slave_message['slave_floor_down'][arrived] = 0
 						button_orders[arrived+4] = 0
 						
 					
@@ -86,6 +86,7 @@ def main():
 					if (button_orders[i+4] == 1) or (slave_message['slave_floor_down'][i] == 1): 
 						button_orders[i+4] = 1
 				
+
 
 				#button_orders = slave_message['slave_floor_up'] + slave_message['slave_floor_down']
 
@@ -112,8 +113,8 @@ def main():
 				#print elevators_received_current_queue_id
 				#print active_slaves
 				#print queue_id
-				print button_orders
-				print last_button_orders
+				#print button_orders
+				#print last_button_orders
 				downtime_elevator_online[slave_id-1] = time.time() + 3
 				elevator_online[slave_id-1] = 1
 					
@@ -121,7 +122,8 @@ def main():
 				
 				
 				elevator_orders = master_handler.order_elevator(last_button_orders, elevator_positions, elevator_online)
-
+				print elevator_online
+				print elevator_orders
 				goto_floor_up[0:4] = elevator_orders[0:4]
 				goto_floor_down[0:4] = elevator_orders[4:8]
 				#print elevator_orders
