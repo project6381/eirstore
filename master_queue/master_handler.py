@@ -23,9 +23,11 @@ class MasterHandler:
 
 
 	def update_master_alive(self, elevator_id):
-			self.__send(str(elevator_id),MASTER_TO_MASTER_PORT)
+		self.__send(str(elevator_id),MASTER_TO_MASTER_PORT)
 
 			#print "Active masters: " + str(self.__active_masters)
+	#def update_master_button_order(self, button_orders):
+				
 
 	def check_master_alive(self):	
 
@@ -36,7 +38,7 @@ class MasterHandler:
 			if self.__active_masters[i] == 1:
 				return i+1
 		return -1 
-		
+
 	def __send(self, data, port):
 		send = ('<broadcast>', port)
 		udp = socket(AF_INET, SOCK_DGRAM)
