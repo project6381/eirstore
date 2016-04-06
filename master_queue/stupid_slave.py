@@ -9,16 +9,16 @@ import time
 
 def main():
 
-	#instantiate classes
+	#instantiating classes
 	message_handler = MessageHandler(MY_ID)
 	slave_driver = SlaveDriver()
 	slave_handler = SlaveHandler()
 
-	acknowledge = 4
-	run_floor = 0
-	run_button = 0
-	old_f = None
-	old_but = None
+	#acknowledge = 4
+	#run_floor = 0
+	#run_button = 0
+	#old_f = None
+	#old_but = None
 	is_master = False
 	floor_up = [0]*4
 	floor_down = [0]*4
@@ -27,17 +27,12 @@ def main():
 	last_master_id = 0
 	while True:
 
-		#slave_handler.update_slave_alive(my_id)
-
 		if slave_handler.check_slave_alive() == MY_ID:
 			active_slave = True
-
 		
 		position = slave_driver.read_position()
 
 		master_message = message_handler.receive_from_master()
-		
-
 
 		(floor,button) = slave_driver.pop_floor_panel_queue()
 
@@ -59,8 +54,8 @@ def main():
 
 		message_handler.send_to_master(floor_up,floor_down,MY_ID,position[0],position[1],position[2],master_message['queue_id'])
 		
-		print floor_up
-		print floor_down
+		print "floor_up: " +  str(floor_up)
+		print "floor_down: " + str(floor_down)
 
 
 		'''
@@ -75,11 +70,10 @@ def main():
 
 		master_queue = master_message['master_floor_up'][:] + master_message['master_floor_down'][:]
 
-		print str(master_queue) + ' master_queue' 
+		print "master_queue: " + str(master_queue) 
 		
 		#if master_id == MY_ID:
 		#	is_master = True
-
 
 		master_id = master_message['master_id']
 
@@ -89,7 +83,7 @@ def main():
 		if changing_master:	
 			
 			my_master_queue = slave_driver.read_saved_master_queue()
-			print str(my_master_queue) + ' mmmmmmmmmmaaaaaaaaaaaassssdttttttttteeeeeeeeeeerrrrrrrrrrrrr'
+			print "CHANGING MASTER STATE = TRUE -> my_master_queue: " + str(my_master_queue)
 			message_handler.send_to_master(my_master_queue[0:4],my_master_queue[4:8],MY_ID,position[0],position[1],position[2],master_message['queue_id'])
 			orders_ok = True
 			for floor in range(0,N_FLOORS):
@@ -101,12 +95,10 @@ def main():
 
 		if not changing_master:
 			slave_driver.master_queue_elevator_run(master_queue)
-		
 
 		#print ['floor_up:'] + master_message['master_floor_up'] + ['floor_down:'] + master_message['master_floor_down'] 
 		#print master_message['queue_id']
 				
-
 		time.sleep(0.1)
 
 		last_master_id = master_id
