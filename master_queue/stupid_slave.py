@@ -55,7 +55,7 @@ def main():
 			if (master_message['master_floor_down'][i] != 0):
 				floor_down[i] = 0
 		
-		time.sleep(0.3)
+		#time.sleep(0.3)
 
 		message_handler.send_to_master(floor_up,floor_down,MY_ID,position[0],position[1],position[2],master_message['queue_id'])
 		
@@ -73,7 +73,7 @@ def main():
 			slave_driver.queue_elevator_run(run_floor,run_button)
 		'''
 
-		master_queue = master_message['master_floor_up'] + master_message['master_floor_down']
+		master_queue = master_message['master_floor_up'][:] + master_message['master_floor_down'][:]
 
 		print str(master_queue) + ' master_queue' 
 		
@@ -107,7 +107,7 @@ def main():
 		#print master_message['queue_id']
 				
 
-		time.sleep(0.5)
+		time.sleep(0.1)
 
 		last_master_id = master_id
 

@@ -49,7 +49,7 @@ def main():
 
 		print "I am NOT master, my id is: " + str(MY_ID)
 
-		time.sleep(0.5)
+		time.sleep(0.02)
 
 		while active_master:
 
