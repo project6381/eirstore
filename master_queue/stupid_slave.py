@@ -76,12 +76,13 @@ def main():
 
 		print str(master_queue) + ' master_queue' 
 		
-		if master_id == MY_ID:
-			is_master = True
+		#if master_id == MY_ID:
+		#	is_master = True
+
 
 		master_id = master_message['master_id']
 
-		if (is_master) and master_id != MY_ID: 
+		if last_master_id !=  master_id: 
 			changing_master = True
 		
 		if changing_master:	
@@ -107,7 +108,7 @@ def main():
 
 		time.sleep(0.5)
 
-		
+		last_master_id = master_id
 
 if __name__ == "__main__":
     main()
