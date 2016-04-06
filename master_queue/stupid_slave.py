@@ -24,6 +24,7 @@ def main():
 	floor_down = [0]*4
 	master_id = 10
 	changing_master = True
+	last_master_id = 0
 	while True:
 
 		#slave_handler.update_slave_alive(my_id)
@@ -88,7 +89,7 @@ def main():
 		if changing_master:	
 			
 			my_master_queue = slave_driver.read_saved_master_queue()
-			print my_master_queue
+			print str(my_master_queue) + ' mmmmmmmmmmaaaaaaaaaaaassssdttttttttteeeeeeeeeeerrrrrrrrrrrrr'
 			message_handler.send_to_master(my_master_queue[0:4],my_master_queue[4:8],MY_ID,position[0],position[1],position[2],master_message['queue_id'])
 			orders_ok = True
 			for floor in range(0,N_FLOORS):

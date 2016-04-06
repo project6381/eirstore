@@ -124,7 +124,7 @@ def main():
 				goto_floor_up[0:4] = elevator_orders[0:4]
 				goto_floor_down[0:4] = elevator_orders[4:8]
 			
-			message_handler.send_to_slave(goto_floor_up,goto_floor_down,executer_id,execute_queue,queue_id)
+			message_handler.send_to_slave(goto_floor_up,goto_floor_down,executer_id,MY_ID,queue_id)
 			
 
 			for i in range(0,N_ELEVATORS):
