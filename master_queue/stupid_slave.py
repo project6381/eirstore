@@ -1,7 +1,7 @@
 from slave_driver import SlaveDriver
 from slave_handler import SlaveHandler
 from message_handler import MessageHandler
-from constants import SLAVE_TO_MASTER_PORT, MASTER_TO_SLAVE_PORT, MY_ID
+from constants import SLAVE_TO_MASTER_PORT, MASTER_TO_SLAVE_PORT, MY_ID, N_FLOORS
 import elevator
 import time
 
@@ -19,10 +19,11 @@ def main():
 	run_button = 0
 	old_f = None
 	old_but = None
-
+	is_master = False
 	floor_up = [0]*4
 	floor_down = [0]*4
-
+	master_id = 10
+	changing_master = True
 	while True:
 
 		#slave_handler.update_slave_alive(my_id)
@@ -35,6 +36,8 @@ def main():
 
 		master_message = message_handler.receive_from_master()
 		
+
+
 		(floor,button) = slave_driver.pop_floor_panel_queue()
 
 		if floor is not None:
@@ -70,8 +73,32 @@ def main():
 		'''
 
 		master_queue = master_message['master_floor_up'] + master_message['master_floor_down']
+
 		print str(master_queue) + ' master_queue' 
-		slave_driver.master_queue_elevator_run(master_queue)
+		
+		if master_id == MY_ID:
+			is_master = True
+
+		master_id = master_message['master_id']
+
+		if (is_master) and master_id != MY_ID: 
+			changing_master = True
+		
+		if changing_master:	
+			
+			my_master_queue = slave_driver.read_saved_master_queue()
+			print my_master_queue
+			message_handler.send_to_master(my_master_queue[0:4],my_master_queue[4:8],MY_ID,position[0],position[1],position[2],master_message['queue_id'])
+			orders_ok = True
+			for floor in range(0,N_FLOORS):
+				if ((my_master_queue[floor] > 0) and (master_message['master_floor_up'][floor] == 0)) and ((my_master_queue[floor+4] > 0) and (master_message['master_floor_down'][floor] == 0)):
+					orders_ok = False 
+			if orders_ok: 
+				is_master = False 
+				changing_master = False
+
+		if not changing_master:
+			slave_driver.master_queue_elevator_run(master_queue)
 		
 
 		#print ['floor_up:'] + master_message['master_floor_up'] + ['floor_down:'] + master_message['master_floor_down'] 

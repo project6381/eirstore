@@ -92,7 +92,7 @@ def main():
 						button_orders[i+4] = 1
 				
 
-				print str(button_orders) + ' button_orders'
+				#print str(button_orders) + ' button_orders'
 				#button_orders = slave_message['slave_floor_up'] + slave_message['slave_floor_down']
 
 				

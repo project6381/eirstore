@@ -29,7 +29,7 @@ class MessageHandler:
 								'executer_id': [0]*8,
 								'floor':[],
 								'button':[],
-								'execute_queue': 0,
+								'master_id': 0,
 								'queue_id': 0}
 		self.__last_master_floor_up = [0]*4
 		self.__last_master_floor_down = [0]*4
@@ -56,11 +56,11 @@ class MessageHandler:
 		self.__send(message,SLAVE_TO_MASTER_PORT)
 
 
-	def send_to_slave(self,master_floor_up,master_floor_down,executer_id,execute_queue,queue_id):
+	def send_to_slave(self,master_floor_up,master_floor_down,executer_id,master_id,queue_id):
 
 		message = str()
 
-		execute_queue = str(execute_queue)
+		master_id = str(master_id)
 		queue_id = str(queue_id)
 		
 		for i in range(0,len(master_floor_up)):
@@ -74,7 +74,7 @@ class MessageHandler:
 			message += str(executer_id[i])
 
 
-		message += execute_queue
+		message += master_id
 		message += queue_id
 		
 		for _ in range(0,3):
@@ -113,7 +113,7 @@ class MessageHandler:
 					self.__last_master_floor_down[i] = self.__master_message['master_floor_down'][i]
 			'''
 
-			self.__master_message['execute_queue'] = int(message[16])
+			self.__master_message['master_id'] = int(message[16])
 			self.__master_message['queue_id'] = int(message[17:])
 			
 		
