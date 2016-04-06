@@ -1,7 +1,7 @@
 from random import randint
 from master_handler import MasterHandler
 from message_handler import MessageHandler
-from constants import SLAVE_TO_MASTER_PORT, MASTER_TO_SLAVE_PORT, DIRN_DOWN, DIRN_UP, DIRN_STOP, N_ELEVATORS
+from constants import SLAVE_TO_MASTER_PORT, MASTER_TO_SLAVE_PORT, DIRN_DOWN, DIRN_UP, DIRN_STOP, N_ELEVATORS, MY_ID
 import time
 from collections import Counter
 
@@ -32,21 +32,22 @@ def main():
 	last_direction = 0
 
 	executer_id = [0]*8
-	my_id = 1
 	active_master = False
+	semi_active_master = False
 	downtime_elevator_online = [time.time() + 3]*N_ELEVATORS
 	downtime_queue_id = time.time() + 3
 	timeout_active_slaves = 0
+
 	while True:
 
-		master_handler.update_master_alive(my_id)
+		master_handler.update_master_alive(MY_ID)
 		master_queue = master_handler.get_master_queue()
 
-		if master_handler.check_master_alive() == my_id:
+		if master_handler.check_master_alive() == MY_ID:
 			active_master = True
 			button_orders = master_queue[:]
 
-		print "I am NOT master, my id is: " + str(my_id)
+		print "I am NOT master, my id is: " + str(MY_ID)
 
 		time.sleep(0.5)
 
@@ -54,7 +55,7 @@ def main():
 
 			#print "I AM master, my id is: " + str(my_id)
 			
-			master_handler.update_master_alive(my_id)
+			master_handler.update_master_alive(MY_ID)
 
 			slave_message = message_handler.receive_from_slave()
 			if slave_message is not None:
@@ -113,28 +114,18 @@ def main():
 					downtime_queue_id = time.time() + 1
 					timeout_active_slaves = 0
 
-				
-				#print elevators_received_current_queue_id
-				#print active_slaves
-				#print queue_id
-				#print button_orders
-				#print last_button_orders
 				downtime_elevator_online[slave_id-1] = time.time() + 3
 				elevator_online[slave_id-1] = 1
 					
-				
-				
-				
+								
 				elevator_orders = master_handler.order_elevator(last_button_orders, elevator_positions, elevator_online)
 				print elevator_online
 				print elevator_orders
 				goto_floor_up[0:4] = elevator_orders[0:4]
 				goto_floor_down[0:4] = elevator_orders[4:8]
-				#print elevator_orders
 			
 			message_handler.send_to_slave(goto_floor_up,goto_floor_down,executer_id,execute_queue,queue_id)
 			
-				
 
 			for i in range(0,N_ELEVATORS):
 				if downtime_elevator_online[i] < time.time():
@@ -147,8 +138,12 @@ def main():
 			master_handler.update_master_button_order(button_orders)
 			time.sleep(0.02)
 
-			if master_handler.check_master_alive() != my_id:
+			if master_handler.check_master_alive() != MY_ID:
 				active_master = False
+				semi_active_master = True
+
+		while semi_active_master:
+			semi_active_master = False
 
 
 

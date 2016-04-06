@@ -1,19 +1,19 @@
 from slave_driver import SlaveDriver
 from slave_handler import SlaveHandler
 from message_handler import MessageHandler
-from constants import SLAVE_TO_MASTER_PORT, MASTER_TO_SLAVE_PORT
+from constants import SLAVE_TO_MASTER_PORT, MASTER_TO_SLAVE_PORT, MY_ID
 import elevator
 import time
 
 
 
 def main():
-	slave_id = 2
-	message_handler = MessageHandler(slave_id)
+
+	#instantiate classes
+	message_handler = MessageHandler(MY_ID)
 	slave_driver = SlaveDriver()
 	slave_handler = SlaveHandler()
 
-	#my_id = get IP address on this computer
 	acknowledge = 4
 	run_floor = 0
 	run_button = 0
@@ -27,7 +27,7 @@ def main():
 
 		#slave_handler.update_slave_alive(my_id)
 
-		if slave_handler.check_slave_alive() == slave_id:
+		if slave_handler.check_slave_alive() == MY_ID:
 			active_slave = True
 
 		
@@ -53,11 +53,8 @@ def main():
 		
 		time.sleep(0.3)
 
+		message_handler.send_to_master(floor_up,floor_down,MY_ID,position[0],position[1],position[2],master_message['queue_id'])
 		
-
-		message_handler.send_to_master(floor_up,floor_down,slave_id,position[0],position[1],position[2],master_message['queue_id'])
-		
-
 		print floor_up
 		print floor_down
 
@@ -73,14 +70,13 @@ def main():
 		'''
 
 		master_queue = master_message['master_floor_up'] + master_message['master_floor_down']
+		print str(master_queue) + ' master_queue' 
 		slave_driver.master_queue_elevator_run(master_queue)
 		
-		
 
-		print ['floor_up:'] + master_message['master_floor_up'] + ['floor_down:'] + master_message['master_floor_down'] 
+		#print ['floor_up:'] + master_message['master_floor_up'] + ['floor_down:'] + master_message['master_floor_down'] 
 		#print master_message['queue_id']
 				
-
 
 		time.sleep(0.5)
 
