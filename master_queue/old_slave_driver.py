@@ -1,6 +1,6 @@
 from elevator_interface import ElevatorInterface
 from panel_interface import PanelInterface
-from constants import N_FLOORS, DIRN_STOP, DIRN_UP, DIRN_DOWN, BUTTON_CALL_UP, BUTTON_CALL_DOWN, BUTTON_COMMAND, MY_ID
+from constants import N_FLOORS, DIRN_STOP, DIRN_UP, DIRN_DOWN, BUTTON_CALL_UP, BUTTON_CALL_DOWN
 from threading import Thread, Lock
 from thread import interrupt_main
 import time
@@ -13,12 +13,8 @@ class SlaveDriver:
 		self.__elevator_interface = ElevatorInterface()
 		self.__panel_interface = PanelInterface()
 		self.__elevator_queue_key = Lock()
-		self.__master_queue_key = Lock()
-		self.__internal_queue_key = Lock()
 		self.__floor_panel_queue_key = Lock()
 		self.__elevator_queue = [[0 for button in range(0,3)] for floor in range(0,N_FLOORS)]
-		self.__saved_master_queue = [0 for floor in range (0,N_FLOORS*2)]
-		self.__saved_internal_queue = [0 for floor in range (0,N_FLOORS)]
 		self.__floor_panel_queue = []
 		self.__position = (0,0,DIRN_STOP)
 		self.__thread_run_elevator = Thread(target = self.__run_elevator, args = (),)
@@ -27,42 +23,11 @@ class SlaveDriver:
 		self.__start()
 
 
-	def master_queue_elevator_run(self,master_queue):
+	def queue_elevator_run(self,floor,button):
 		with watchdogs.WatchdogTimer(1):
-			with self.__master_queue_key:
-				if master_queue != self.__saved_master_queue:
-					with open("master_file_1", "wb") as master_file:
-						pickle.dump(master_queue, master_file)
+			with self.__elevator_queue_key:
+				self.__elevator_queue[floor][button]=1
 
-					with open("master_file_2", "wb") as master_file: 
-						pickle.dump(master_queue, master_file)
-
-					try:
-						with open("master_file_1", "rb") as master_file:
-							self.__saved_master_queue = pickle.load(master_file)
-						assert master_queue == self.__saved_master_queue, "unknown error loading master_file_1"
-					except StandardError as error:
-						print error
-						with open("master_file_2", "rb") as master_file: 
-							self.__saved_master_queue = pickle.load(master_file)
-						assert master_queue == self.__saved_master_queue, "unknown error loading master_file_2"
-
-					with self.__elevator_queue_key:
-						for floor in range(0,N_FLOORS):
-							if self.__saved_master_queue[floor] == MY_ID:
-								self.__elevator_queue[floor][BUTTON_CALL_UP]=1
-							else:
-								self.__elevator_queue[floor][BUTTON_CALL_UP]=0
-						for floor in range(N_FLOORS,N_FLOORS*2):
-							if self.__saved_master_queue[floor] == MY_ID:
-								self.__elevator_queue[floor-N_FLOORS][BUTTON_CALL_DOWN]=1
-							else:
-								self.__elevator_queue[floor-N_FLOORS][BUTTON_CALL_DOWN]=0
-
-	def read_saved_master_queue(self):
-		with self.__master_queue_key:
-			return self.__saved_master_queue
-			
 
 	def pop_floor_panel_queue(self):
 		with watchdogs.WatchdogTimer(1):
@@ -126,44 +91,17 @@ class SlaveDriver:
 
 	def __load_elevator_queue(self):
 		try:
-			with open("master_file_1", "rb") as master_file:
-				self.__saved_master_queue = pickle.load(master_file)
+			with open("queue_file_1", "rb") as queue_file:
+				self.__elevator_queue = pickle.load(queue_file)
 		except StandardError as error:
 			print error
 			print "SlaveDriver.__load_elevator_queue"
-			print "master_file_1"
 			try:
-				with open("master_file_2", "rb") as master_file: 
-					self.__saved_master_queue = pickle.load(master_file)
+				with open("queue_file_2", "rb") as queue_file:
+					self.__elevator_queue = pickle.load(queue_file)
 			except StandardError as error:
 				print error
 				print "SlaveDriver.__load_elevator_queue"
-				print "master_file_2"
-
-		for floor in range(0,N_FLOORS):
-			if self.__saved_master_queue[floor] == MY_ID:
-				self.__elevator_queue[floor][BUTTON_CALL_UP]=1
-		for floor in range(N_FLOORS,N_FLOORS*2):
-			if self.__saved_master_queue[floor] == MY_ID:
-				self.__elevator_queue[floor-N_FLOORS][BUTTON_CALL_DOWN]=1
-
-		try:
-			with open("internal_file_1", "rb") as internal_file:
-				self.__saved_internal_queue = pickle.load(internal_file)
-		except StandardError as error:
-			print error
-			print "SlaveDriver.__load_elevator_queue"
-			print "internal_file_1"
-			try:
-				with open("queue_file_2", "rb") as internal_file:
-					self.__saved_internal_queue = pickle.load(internal_file)
-			except StandardError as error:
-				print error
-				print "SlaveDriver.__load_elevator_queue"
-				print "internal_file_2"
-
-		for floor in range(0,N_FLOORS):
-			self.__elevator_queue[floor][BUTTON_COMMAND] = self.__saved_internal_queue[floor]
 
 
 	def __run_elevator(self):
@@ -179,7 +117,7 @@ class SlaveDriver:
 			while True:
 				time.sleep(0.01)
 				__run_elevator_watchdog.PetWatchdog()
-				#print self.__elevator_queue
+
 				floor_max = 0
 				floor_min = N_FLOORS-1
 
@@ -253,47 +191,21 @@ class SlaveDriver:
 			__build_queues_watchdog = watchdogs.ThreadWatchdog(1,"watchdog event: SlaveDriver.__build_queues")
 			__build_queues_watchdog.StartWatchdog()
 
-			internal_queue = [0 for floor in range (0,N_FLOORS)]
-
 			while True:
 				time.sleep(0.01)
 				__build_queues_watchdog.PetWatchdog()
 
 				for floor in range (0,N_FLOORS):
 					for button in range(0,3):
-						if (floor == 0 and button == BUTTON_CALL_DOWN) or (floor == 3 and button == BUTTON_CALL_UP):
+						if (floor == 0 and button == 1) or (floor == 3 and button == 0):
 							pass
 						elif self.__panel_interface.get_button_signal(button,floor):
-							if button == BUTTON_COMMAND:
-								internal_queue[floor]=1
+							if button == 2:	
+								with self.__elevator_queue_key:
+									self.__elevator_queue[floor][button]=1
 							elif (floor,button) not in self.__floor_panel_queue:
 								with self.__floor_panel_queue_key:
 									self.__floor_panel_queue.append((floor,button))
-
-					with self.__internal_queue_key:
-						if internal_queue != self.__saved_internal_queue:
-							with open("internal_file_1", "wb") as internal_file:
-								pickle.dump(internal_queue, internal_file)
-
-							with open("internal_file_2", "wb") as internal_file: 
-								pickle.dump(internal_queue, internal_file)
-							try:
-								with open("internal_file_1", "rb") as internal_file:
-									self.__saved_internal_queue = pickle.load(internal_file)
-								assert internal_queue == self.__saved_internal_queue, "unknown error loading internal_file_1"
-							except StandardError as error:
-								print error
-								with open("internal_file_2", "rb") as internal_file: 
-									self.__saved_internal_queue = pickle.load(internal_file)
-								assert internal_queue == self.__saved_internal_queue, "unknown error loading internal_file_2"
-							with self.__elevator_queue_key:
-								if self.__saved_internal_queue[floor] == 1:
-									self.__elevator_queue[floor][button]=1
-						with self.__elevator_queue_key:
-							if self.__elevator_queue[floor][BUTTON_COMMAND] == 0:
-								internal_queue[floor] = 0
-				print self.__elevator_queue
-
 
 		except StandardError as error:
 			print error
@@ -306,31 +218,38 @@ class SlaveDriver:
 			__set_indicators_watchdog = watchdogs.ThreadWatchdog(1,"watchdog event: SlaveDriver.__set_indicators_watchdog")
 			__set_indicators_watchdog.StartWatchdog()
 
+			saved_elevator_queue = [[0 for button in range(0,3)] for floor in range(0,N_FLOORS)]
+
 			while True:
 				time.sleep(0.01)
 				__set_indicators_watchdog.PetWatchdog()
 				
-				with self.__master_queue_key:
-					for floor in range(0,N_FLOORS):
-						if floor != 3:
-							if self.__saved_master_queue[floor] > 0:
-								self.__panel_interface.set_button_lamp(BUTTON_CALL_UP,floor,1)
-							else:
-								self.__panel_interface.set_button_lamp(BUTTON_CALL_UP,floor,0)
-					for floor in range(N_FLOORS,N_FLOORS*2):
-						if floor != 0:
-							if self.__saved_master_queue[floor] > 0:
-								self.__panel_interface.set_button_lamp(BUTTON_CALL_DOWN,floor-N_FLOORS,1)
-							else:
-								self.__panel_interface.set_button_lamp(BUTTON_CALL_DOWN,floor-N_FLOORS,0)
+				with self.__elevator_queue_key:
+					if self.__elevator_queue != saved_elevator_queue:
+						with open("queue_file_1", "wb") as queue_file:
+							pickle.dump(self.__elevator_queue, queue_file)
 
-				with self.__internal_queue_key:
-					for floor in range(0,N_FLOORS):
-						if self.__saved_internal_queue[floor] == 1:
-							self.__panel_interface.set_button_lamp(BUTTON_COMMAND,floor,1)
-						else:
-							self.__panel_interface.set_button_lamp(BUTTON_COMMAND,floor,0)
-																	
+						with open("queue_file_2", "wb") as queue_file: 
+							pickle.dump(self.__elevator_queue, queue_file)
+
+						try:
+							with open("queue_file_1", "rb") as queue_file:
+								saved_elevator_queue = pickle.load(queue_file)
+							assert saved_elevator_queue == self.__elevator_queue, "unknown error loading queue_file_1"
+						except StandardError as error:
+							print error
+							with open("queue_file_2", "rb") as queue_file: 
+								saved_elevator_queue = pickle.load(queue_file)
+							assert saved_elevator_queue == self.__elevator_queue, "unknown error loading queue_file_2"
+
+						for floor in range(0,N_FLOORS):
+								for button in range(0,3):
+										if (floor == 0 and button == 1) or (floor == 3 and button == 0):
+											pass
+										elif saved_elevator_queue[floor][button] == 1:
+											self.__panel_interface.set_button_lamp(button,floor,1)
+										else:
+											self.__panel_interface.set_button_lamp(button,floor,0)
 				
 				(last_floor, next_floor, direction) = self.__position
 				

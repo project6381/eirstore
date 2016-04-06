@@ -98,7 +98,7 @@ class MessageHandler:
 			self.__master_message['queue_id'] = int(message[17])
 			
 
-
+			'''
 			for i in range (0,4):
 				if self.__last_master_floor_up[i] != self.__master_message['master_floor_up'][i]: # and id == my_id
 					if self.__master_message['master_floor_up'][i] == self.__slave_id:
@@ -111,7 +111,7 @@ class MessageHandler:
 						self.__master_message['floor'].append(i) 
 						self.__master_message['button'].append(1)
 					self.__last_master_floor_down[i] = self.__master_message['master_floor_down'][i]
-
+			'''
 
 			self.__master_message['execute_queue'] = int(message[16])
 			self.__master_message['queue_id'] = int(message[17:])
@@ -138,7 +138,7 @@ class MessageHandler:
 			return self.__slave_message
 
 
-
+	'''
 	def get_my_master_order(self):
 		
 
@@ -149,7 +149,7 @@ class MessageHandler:
 
 		else: 
 			return (None,None)
-
+	'''
 
 
 	def __send(self, data, port):

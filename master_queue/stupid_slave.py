@@ -62,18 +62,18 @@ def main():
 		print floor_down
 
 
-
+		'''
 		(run_floor,run_button) = message_handler.get_my_master_order()
 		
 		print run_floor
 		print run_button
 
 		if run_floor is not None:
-			slave_driver.queue_elevator_run(run_floor,run_button)	
-		
+			slave_driver.queue_elevator_run(run_floor,run_button)
+		'''
 
-
-		
+		master_queue = master_message['master_floor_up'] + master_message['master_floor_down']
+		slave_driver.master_queue_elevator_run(master_queue)
 		
 		
 
@@ -84,13 +84,7 @@ def main():
 
 		time.sleep(0.5)
 
-		'''
-		(floor, button) = message_handler.read_message(MASTER_TO_SLAVE_PORT)
-		if (floor and button) is not None:
-			floor = int(floor)
-			button = int(button)
-			elevator_driver.queue_floor_button_run(floor, button)
-		'''
+		
 
 if __name__ == "__main__":
     main()
